@@ -259,9 +259,7 @@ var Genetic = Genetic || (function(){
 				alert('ERROR: Line ' + e.lineno + ' in ' + e.filename + ': ' + e.message);
 			};
 			worker.postMessage("");
-			return {
-        worker: worker
-      };
+			this.worker = worker
 		} else {
 			// simulate webworker
 			(function(){
@@ -269,9 +267,15 @@ var Genetic = Genetic || (function(){
 				eval(blobScript);
 				onmessage(null);
 			})();
-			return {
-				worker: null,
-			}
+		}
+	}
+	
+	Genetic.prototype.terminate = function () {
+		if (this.worker) {
+			console.log('Stop worker successfully');
+			this.worker.terminate();
+		} else {
+			console.log('Stop worker failed');
 		}
 	}
 	
