@@ -210,73 +210,24 @@ var Genetic = Genetic || (function(){
 	}
 	
 	Genetic.prototype.evolve = function(config, userData) {
-		
 		var k;
 		for (k in config) {
 			this.configuration[k] = config[k];
 		}
-		
+
 		for (k in userData) {
 			this.userData[k] = userData[k];
 		}
-		
-		// determine if we can use webworkers
-		this.usingWebWorker = this.configuration.webWorkers
-			&& typeof Blob != "undefined"
-			&& typeof Worker != "undefined"
-			&& typeof window.URL != "undefined"
-			&& typeof window.URL.createObjectURL != "undefined";
-		
-		function addslashes(str) {
-			return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-		}
-			
-		// bootstrap webworker script
-		var blobScript = "'use strict'\n";
-		blobScript += "var Serialization = {'stringify': " + Serialization.stringify.toString() + ", 'parse': " + Serialization.parse.toString() + "};\n";
-		blobScript += "var Clone = " + Clone.toString() + ";\n";
-		
-		// make available in webworker
-		blobScript += "var Optimize = Serialization.parse(\"" + addslashes(Serialization.stringify(Optimize)) + "\");\n";
-		blobScript += "var Select1 = Serialization.parse(\"" + addslashes(Serialization.stringify(Select1)) + "\");\n";
-		blobScript += "var Select2 = Serialization.parse(\"" + addslashes(Serialization.stringify(Select2)) + "\");\n";
-		
-		// materialize our ga instance in the worker
-		blobScript += "var genetic = Serialization.parse(\"" + addslashes(Serialization.stringify(this)) + "\");\n";
-		blobScript += "onmessage = function(e) { genetic.start(); }\n";
-		
-		var self = this;
-		
-		if (this.usingWebWorker) {
-			// webworker
-			var blob = new Blob([blobScript]);
-			var worker = new Worker(window.URL.createObjectURL(blob));
-			worker.onmessage = function(e) {
-			  var response = e.data;
-			  self.notification(response.pop.map(Serialization.parse), response.generation, response.stats, response.isFinished);
-			};
-			worker.onerror = function(e) {
-				alert('ERROR: Line ' + e.lineno + ' in ' + e.filename + ': ' + e.message);
-			};
-			worker.postMessage("");
-			this.worker = worker
-		} else {
-			// simulate webworker
-			(function(){
-				var onmessage;
-				eval(blobScript);
-				onmessage(null);
-			})();
-		}
+		this.start();
 	}
 	
 	Genetic.prototype.terminate = function () {
-		if (this.worker) {
-			console.log('Stop worker successfully');
-			this.worker.terminate();
-		} else {
-			console.log('Stop worker failed');
-		}
+		// if (this.worker) {
+		// 	console.log('Stop worker successfully');
+		// 	this.worker.terminate();
+		// } else {
+		// 	console.log('Stop worker failed');
+		// }
 	}
 	
 	return {
